@@ -11,6 +11,10 @@ The MCP server exposes two product tools:
 - `hey_jules_get_day_context` performs a read-only request for a pre-formatted planning briefing.
 - `hey_jules_commit_calendar_event` performs one destructive, approval-gated event creation.
 
+In the supported **Supervised** prototype flow, the product policy allows the scoped context read
+without interruption and routes the calendar commit through inline approval. Keep Supervised mode
+enabled: broader coding-harness permission modes are intentionally outside this acceptance path.
+
 The local MCP handler calls the companion Hey Jules API with `HEY_JULES_API_TOKEN`. The agent sees
 the tool result but never the token, database URL, calendar refresh token, or provider login files.
 
@@ -39,6 +43,16 @@ Use HTTPS for a remote Hey Jules deployment. The desktop rejects bearer credenti
 non-loopback HTTP endpoint.
 
 ## Manual acceptance flow
+
+Run the non-mutating preflight first:
+
+```bash
+pnpm run verify:prototype -- --date 2026-08-08
+```
+
+It checks local Codex/Claude authentication, the safe transport and tool-permission contract, and a
+real context read. Its output includes only aggregate counts and briefing length; it never prints
+the API token or the private briefing itself.
 
 1. Start Hey Jules and HeyJules Desktop.
 2. Confirm Codex or Claude reports the existing subscription account as authenticated.

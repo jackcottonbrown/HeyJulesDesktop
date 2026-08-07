@@ -3220,6 +3220,43 @@ describe("ClaudeAdapterLive", () => {
     );
   });
 
+  it.effect("allows the scoped Hey Jules context read without an approval interruption", () => {
+    const harness = makeHarness();
+    return Effect.gen(function* () {
+      const adapter = yield* ClaudeAdapter;
+
+      yield* adapter.startSession({
+        threadId: THREAD_ID,
+        provider: ProviderDriverKind.make("claudeAgent"),
+        runtimeMode: "approval-required",
+      });
+      yield* Stream.take(adapter.streamEvents, 3).pipe(Stream.runDrain);
+
+      const canUseTool = harness.getLastCreateQueryInput()?.options.canUseTool;
+      assert.equal(typeof canUseTool, "function");
+      if (!canUseTool) return;
+
+      const permissionResult = yield* Effect.promise(() =>
+        canUseTool(
+          "mcp__t3-code__hey_jules_get_day_context",
+          { date: "2026-08-08" },
+          {
+            signal: new AbortController().signal,
+            toolUseID: "hey-jules-context-1",
+          },
+        ),
+      ).pipe(Effect.timeout("1 second"));
+
+      assert.deepEqual(permissionResult, {
+        behavior: "allow",
+        updatedInput: { date: "2026-08-08" },
+      });
+    }).pipe(
+      Effect.provideService(Random.Random, makeDeterministicRandomService()),
+      Effect.provide(harness.layer),
+    );
+  });
+
   it.effect("classifies Agent tools and read-only Claude tools correctly for approvals", () => {
     const harness = makeHarness();
     return Effect.gen(function* () {

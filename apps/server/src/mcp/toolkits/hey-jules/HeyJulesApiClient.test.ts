@@ -109,3 +109,39 @@ it.effect("fails closed before network access when the connection is unconfigure
     expect(called).toBe(false);
   }),
 );
+
+it.effect("reports rejected credentials without exposing the token or response body", () =>
+  Effect.gen(function* () {
+    const responseSecret = "private-upstream-response";
+    const failure = yield* getHeyJulesDayContext(
+      { date: "2026-08-08" },
+      {
+        environment,
+        fetcher: async () => new Response(responseSecret, { status: 401 }),
+      },
+    ).pipe(Effect.flip);
+
+    expect(failure.status).toBe(401);
+    expect(failure.detail).toBe("Hey Jules rejected the configured desktop credential.");
+    expect(failure.detail).not.toContain(environment.HEY_JULES_API_TOKEN);
+    expect(failure.detail).not.toContain(responseSecret);
+  }),
+);
+
+it.effect("sanitizes network failures before returning them to the agent", () =>
+  Effect.gen(function* () {
+    const transportSecret = "socket-error-with-private-token";
+    const failure = yield* getHeyJulesDayContext(
+      { date: "2026-08-08" },
+      {
+        environment,
+        fetcher: async () => {
+          throw new Error(transportSecret);
+        },
+      },
+    ).pipe(Effect.flip);
+
+    expect(failure.detail).toBe("Could not reach Hey Jules. Check the connection and try again.");
+    expect(failure.detail).not.toContain(transportSecret);
+  }),
+);

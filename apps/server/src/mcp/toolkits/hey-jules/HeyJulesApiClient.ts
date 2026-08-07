@@ -83,7 +83,10 @@ const executeJson = <A>(input: {
           ? cause
           : new HeyJulesApiError({
               operation: input.operation,
-              detail: cause instanceof Error ? cause.message : "Hey Jules request failed.",
+              detail:
+                cause instanceof DOMException && cause.name === "TimeoutError"
+                  ? "The Hey Jules request timed out after 30 seconds."
+                  : "Could not reach Hey Jules. Check the connection and try again.",
             }),
     });
 

@@ -76,6 +76,7 @@ import { resolveAttachmentPath } from "../../attachmentStore.ts";
 import { ServerConfig } from "../../config.ts";
 import * as McpProviderSession from "../../mcp/McpProviderSession.ts";
 import { HEY_JULES_AGENT_INSTRUCTIONS } from "../HeyJulesInstructions.ts";
+import { resolveHeyJulesToolPermissionPolicy } from "../HeyJulesToolPermissions.ts";
 import { resolveClaudeSdkExecutablePath } from "../Drivers/ClaudeExecutable.ts";
 import { makeClaudeEnvironment } from "../Drivers/ClaudeHome.ts";
 import {
@@ -3939,8 +3940,16 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
           } satisfies PermissionResult;
         }
 
+        const heyJulesPermission = resolveHeyJulesToolPermissionPolicy(toolName);
+        if (heyJulesPermission === "allow") {
+          return {
+            behavior: "allow",
+            updatedInput: toolInput,
+          } satisfies PermissionResult;
+        }
+
         const runtimeMode = input.runtimeMode ?? "full-access";
-        if (runtimeMode === "full-access") {
+        if (runtimeMode === "full-access" && heyJulesPermission !== "require-approval") {
           return {
             behavior: "allow",
             updatedInput: toolInput,

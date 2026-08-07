@@ -45,10 +45,16 @@ creation always appears as an inline approval before execution.
 ## Verification
 
 ```bash
+pnpm run verify:prototype -- --date 2026-08-08
 pnpm run build:desktop
 pnpm run test:desktop-smoke
 vp test run apps/server/src/mcp/toolkits/hey-jules/HeyJulesApiClient.test.ts
 ```
+
+The prototype preflight is deliberately read-only. It confirms that at least one local provider is
+authenticated, validates the MCP permission contract, and fetches real context while printing only
+counts—not the bearer token or private briefing. The approved-write and rejected-write checks stay
+in the manual acceptance flow because they require an explicit human decision.
 
 The complete manual acceptance flow is documented in [docs/prototype.md](docs/prototype.md).
 
