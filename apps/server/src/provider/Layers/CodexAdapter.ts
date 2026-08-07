@@ -310,6 +310,8 @@ function toRequestTypeFromMethod(method: string): CanonicalRequestType {
       return "tool_user_input";
     case "item/tool/call":
       return "dynamic_tool_call";
+    case "mcpServer/elicitation/request":
+      return "dynamic_tool_call";
     case "account/chatgptAuthTokens/refresh":
       return "auth_tokens_refresh";
     default:
@@ -325,6 +327,8 @@ function toRequestTypeFromKind(kind: ProviderRequestKind | undefined): Canonical
       return "file_read_approval";
     case "file-change":
       return "file_change_approval";
+    case "tool":
+      return "dynamic_tool_call";
     default:
       return "unknown";
   }
@@ -839,6 +843,13 @@ function mapToRuntimeEvents(
             event.payload,
           );
           return payload?.tool ?? undefined;
+        }
+        case "mcpServer/elicitation/request": {
+          const payload = readPayload(
+            EffectCodexSchema.McpServerElicitationRequestParams,
+            event.payload,
+          );
+          return payload?.message ?? undefined;
         }
         default:
           return undefined;

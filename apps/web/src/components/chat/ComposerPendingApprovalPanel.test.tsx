@@ -25,4 +25,21 @@ describe("ComposerPendingApprovalPanel", () => {
     expect(markup).not.toContain("truncate");
     expect(markup).not.toContain("line-clamp");
   });
+
+  it("labels MCP tool approvals as proposed actions", () => {
+    const markup = renderToStaticMarkup(
+      <ComposerPendingApprovalPanel
+        approval={{
+          requestId: ApprovalRequestId.make("approval-tool-1"),
+          requestKind: "tool",
+          createdAt: "2026-08-07T00:00:00.000Z",
+          detail: "Create a tentative calendar event",
+        }}
+        pendingCount={1}
+      />,
+    );
+
+    expect(markup).toContain("Tool approval requested");
+    expect(markup).toContain('aria-label="Proposed action"');
+  });
 });

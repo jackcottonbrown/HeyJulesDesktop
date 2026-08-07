@@ -17,8 +17,10 @@ import { codexSessionAppServerArgs } from "./codexLaunchArgs.ts";
 import {
   buildTurnStartParams,
   hasConfiguredMcpServer,
+  isCodexMcpToolApprovalElicitation,
   isRecoverableThreadResumeError,
   openCodexThread,
+  toCodexMcpToolApprovalResponse,
 } from "./CodexSessionRuntime.ts";
 const isCodexAppServerRequestError = Schema.is(CodexErrors.CodexAppServerRequestError);
 
@@ -36,6 +38,48 @@ describe("CodexSessionRuntimeIdentifierGenerationError", () => {
       error.message,
       "Failed to generate Codex App Server identifier for provider-event.",
     );
+  });
+});
+
+describe("Codex MCP tool approval elicitations", () => {
+  const approvalPayload: CodexRpc.ServerRequestParamsByMethod["mcpServer/elicitation/request"] = {
+    mode: "form",
+    message: "Create the tentative calendar event?",
+    requestedSchema: { type: "object", properties: {} },
+    serverName: "t3-code",
+    threadId: "provider-thread-1",
+    turnId: "provider-turn-1",
+    _meta: {
+      codex_approval_kind: "mcp_tool_call",
+      persist: "session",
+    },
+  };
+
+  it("recognizes only MCP tool-approval forms", () => {
+    NodeAssert.equal(isCodexMcpToolApprovalElicitation(approvalPayload), true);
+    NodeAssert.equal(
+      isCodexMcpToolApprovalElicitation({
+        ...approvalPayload,
+        _meta: { codex_approval_kind: "unrelated_form" },
+      }),
+      false,
+    );
+  });
+
+  it("maps desktop approval decisions to Codex elicitation responses", () => {
+    NodeAssert.deepStrictEqual(toCodexMcpToolApprovalResponse("accept"), {
+      action: "accept",
+    });
+    NodeAssert.deepStrictEqual(toCodexMcpToolApprovalResponse("acceptForSession"), {
+      action: "accept",
+      _meta: { persist: "session" },
+    });
+    NodeAssert.deepStrictEqual(toCodexMcpToolApprovalResponse("decline"), {
+      action: "decline",
+    });
+    NodeAssert.deepStrictEqual(toCodexMcpToolApprovalResponse("cancel"), {
+      action: "cancel",
+    });
   });
 });
 

@@ -73,6 +73,36 @@ const CodexUserInputAnswerObject = Schema.Struct({
 const isCodexResumeCursorSchema = Schema.is(CodexResumeCursorSchema);
 const isCodexUserInputAnswerObject = Schema.is(CodexUserInputAnswerObject);
 
+function unknownRecord(value: unknown): Readonly<Record<string, unknown>> | undefined {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Readonly<Record<string, unknown>>)
+    : undefined;
+}
+
+export function isCodexMcpToolApprovalElicitation(
+  payload: EffectCodexSchema.McpServerElicitationRequestParams,
+): boolean {
+  if (payload.mode !== "form" && payload.mode !== "openai/form") {
+    return false;
+  }
+  return unknownRecord(payload._meta)?.codex_approval_kind === "mcp_tool_call";
+}
+
+export function toCodexMcpToolApprovalResponse(
+  decision: ProviderApprovalDecision,
+): EffectCodexSchema.McpServerElicitationRequestResponse {
+  switch (decision) {
+    case "accept":
+      return { action: "accept" };
+    case "acceptForSession":
+      return { action: "accept", _meta: { persist: "session" } };
+    case "decline":
+      return { action: "decline" };
+    case "cancel":
+      return { action: "cancel" };
+  }
+}
+
 // TODO: Verify `packages/effect-codex-app-server/scripts/generate.ts` so the generated
 // `V2TurnStartParams` schema includes `collaborationMode` directly.
 const CodexTurnStartParamsWithCollaborationMode = EffectCodexSchema.V2TurnStartParams.pipe(
@@ -1546,6 +1576,57 @@ export const makeCodexSessionRuntime = (
         } satisfies EffectCodexSchema.FileChangeRequestApprovalResponse;
       }),
     );
+
+    yield* client.handleServerRequest("mcpServer/elicitation/request", (payload) => {
+      if (!isCodexMcpToolApprovalElicitation(payload)) {
+        // This client does not yet render arbitrary MCP forms or URL
+        // elicitations. Declining is the protocol-safe fallback and avoids
+        // treating an unsupported form as user approval.
+        return Effect.succeed({
+          action: "decline",
+        } satisfies EffectCodexSchema.McpServerElicitationRequestResponse);
+      }
+
+      return Effect.gen(function* () {
+        const requestId = ApprovalRequestId.make(yield* randomUUIDv4("mcp-tool-approval-request"));
+        const turnId = typeof payload.turnId === "string" ? TurnId.make(payload.turnId) : undefined;
+        const decision = yield* Deferred.make<ProviderApprovalDecision>();
+
+        yield* Ref.update(pendingApprovalsRef, (current) => {
+          const next = new Map(current);
+          next.set(requestId, {
+            requestId,
+            jsonRpcId: requestId,
+            requestKind: "tool",
+            turnId,
+            itemId: undefined,
+            decision,
+          });
+          return next;
+        });
+
+        yield* emitEvent({
+          kind: "request",
+          threadId: options.threadId,
+          method: "mcpServer/elicitation/request",
+          requestId,
+          requestKind: "tool",
+          ...(turnId ? { turnId } : {}),
+          payload,
+        });
+
+        const resolved = yield* Deferred.await(decision).pipe(
+          Effect.ensuring(
+            Ref.update(pendingApprovalsRef, (current) => {
+              const next = new Map(current);
+              next.delete(requestId);
+              return next;
+            }),
+          ),
+        );
+        return toCodexMcpToolApprovalResponse(resolved);
+      });
+    });
 
     yield* client.handleServerRequest("item/tool/requestUserInput", (payload) =>
       Effect.gen(function* () {

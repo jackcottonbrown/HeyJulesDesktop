@@ -15,6 +15,11 @@ In the supported **Supervised** prototype flow, the product policy allows the sc
 without interruption and routes the calendar commit through inline approval. Keep Supervised mode
 enabled: broader coding-harness permission modes are intentionally outside this acceptance path.
 
+Codex App Server delivers MCP tool approvals through `mcpServer/elicitation/request`. The desktop
+recognizes only forms marked `codex_approval_kind: "mcp_tool_call"`, renders them as tool approvals,
+and maps Approve once, session approval, Decline, and Cancel back to the Codex elicitation response.
+Other MCP form and URL elicitations are declined safely until the desktop has a dedicated renderer.
+
 The local MCP handler calls the companion Hey Jules API with `HEY_JULES_API_TOKEN`. The agent sees
 the tool result but never the token, database URL, calendar refresh token, or provider login files.
 

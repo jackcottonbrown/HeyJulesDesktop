@@ -130,7 +130,7 @@ describe("derivePendingApprovals", () => {
     ]);
   });
 
-  it("derives dynamic tool requests as actionable generic approvals", () => {
+  it("derives dynamic tool requests as tool approvals", () => {
     const activities: OrchestrationThreadActivity[] = [
       makeActivity({
         id: "approval-open-dynamic-tool",
@@ -149,7 +149,7 @@ describe("derivePendingApprovals", () => {
     expect(derivePendingApprovals(activities)).toEqual([
       {
         requestId: "req-dynamic-tool",
-        requestKind: "command",
+        requestKind: "tool",
         createdAt: "2026-02-23T00:00:01.000Z",
         detail: "Search the web",
       },

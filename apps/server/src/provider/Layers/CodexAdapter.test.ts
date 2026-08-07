@@ -900,6 +900,73 @@ lifecycleLayer("CodexAdapterLive lifecycle", (it) => {
     }),
   );
 
+  it.effect("maps MCP tool-approval elicitations to actionable tool requests", () =>
+    Effect.gen(function* () {
+      const { adapter, runtime } = yield* startLifecycleRuntime();
+      const firstEventFiber = yield* Stream.runHead(adapter.streamEvents).pipe(Effect.forkChild);
+
+      yield* runtime.emit({
+        id: asEventId("evt-mcp-tool-approval"),
+        kind: "request",
+        provider: ProviderDriverKind.make("codex"),
+        threadId: asThreadId("thread-1"),
+        createdAt: "2026-08-07T00:00:00.000Z",
+        method: "mcpServer/elicitation/request",
+        requestKind: "tool",
+        requestId: ApprovalRequestId.make("req-mcp-tool-1"),
+        turnId: asTurnId("turn-1"),
+        payload: {
+          mode: "form",
+          message: "Create the tentative calendar event?",
+          requestedSchema: { type: "object", properties: {} },
+          serverName: "t3-code",
+          threadId: "provider-thread-1",
+          turnId: "turn-1",
+          _meta: { codex_approval_kind: "mcp_tool_call" },
+        },
+      } satisfies ProviderEvent);
+
+      const firstEvent = yield* Fiber.join(firstEventFiber);
+      NodeAssert.equal(firstEvent._tag, "Some");
+      if (firstEvent._tag !== "Some") return;
+      NodeAssert.equal(firstEvent.value.type, "request.opened");
+      if (firstEvent.value.type !== "request.opened") return;
+      NodeAssert.equal(firstEvent.value.payload.requestType, "dynamic_tool_call");
+      NodeAssert.equal(firstEvent.value.payload.detail, "Create the tentative calendar event?");
+    }),
+  );
+
+  it.effect("preserves tool request type when mapping approval decisions", () =>
+    Effect.gen(function* () {
+      const { adapter, runtime } = yield* startLifecycleRuntime();
+      const firstEventFiber = yield* Stream.runHead(adapter.streamEvents).pipe(Effect.forkChild);
+
+      yield* runtime.emit({
+        id: asEventId("evt-mcp-tool-resolved"),
+        kind: "notification",
+        provider: ProviderDriverKind.make("codex"),
+        threadId: asThreadId("thread-1"),
+        createdAt: "2026-08-07T00:00:01.000Z",
+        method: "item/requestApproval/decision",
+        requestKind: "tool",
+        requestId: ApprovalRequestId.make("req-mcp-tool-1"),
+        payload: {
+          requestId: "req-mcp-tool-1",
+          requestKind: "tool",
+          decision: "accept",
+        },
+      } satisfies ProviderEvent);
+
+      const firstEvent = yield* Fiber.join(firstEventFiber);
+      NodeAssert.equal(firstEvent._tag, "Some");
+      if (firstEvent._tag !== "Some") return;
+      NodeAssert.equal(firstEvent.value.type, "request.resolved");
+      if (firstEvent.value.type !== "request.resolved") return;
+      NodeAssert.equal(firstEvent.value.payload.requestType, "dynamic_tool_call");
+      NodeAssert.equal(firstEvent.value.payload.decision, "accept");
+    }),
+  );
+
   it.effect("preserves file-read request type when mapping serverRequest/resolved", () =>
     Effect.gen(function* () {
       const { adapter, runtime } = yield* startLifecycleRuntime();

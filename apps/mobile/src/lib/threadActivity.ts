@@ -14,7 +14,7 @@ import * as Order from "effect/Order";
 
 export interface PendingApproval {
   readonly requestId: ApprovalRequestId;
-  readonly requestKind: "command" | "file-read" | "file-change";
+  readonly requestKind: "command" | "file-read" | "file-change" | "tool";
   readonly createdAt: string;
   readonly detail?: string;
 }
@@ -142,6 +142,8 @@ function requestKindFromRequestType(requestType: unknown): PendingApproval["requ
     case "command_execution_approval":
     case "exec_command_approval":
       return "command";
+    case "dynamic_tool_call":
+      return "tool";
     case "file_read_approval":
       return "file-read";
     case "file_change_approval":
@@ -612,6 +614,7 @@ function workEntryIcon(entry: DerivedWorkLogEntry): ThreadFeedActivity["icon"] {
   if (entry.requestKind === "command") return "command";
   if (entry.requestKind === "file-read") return "eye";
   if (entry.requestKind === "file-change") return "edit";
+  if (entry.requestKind === "tool") return "wrench";
   if (entry.itemType === "command_execution" || entry.command) return "command";
   if (entry.itemType === "file_change" || (entry.changedFiles?.length ?? 0) > 0) return "edit";
   if (entry.itemType === "web_search") return "globe";
@@ -947,7 +950,8 @@ function extractWorkLogRequestKind(
   if (
     payload?.requestKind === "command" ||
     payload?.requestKind === "file-read" ||
-    payload?.requestKind === "file-change"
+    payload?.requestKind === "file-change" ||
+    payload?.requestKind === "tool"
   ) {
     return payload.requestKind;
   }
@@ -1347,7 +1351,8 @@ export function derivePendingApprovals(
     const requestKind =
       payload?.requestKind === "command" ||
       payload?.requestKind === "file-read" ||
-      payload?.requestKind === "file-change"
+      payload?.requestKind === "file-change" ||
+      payload?.requestKind === "tool"
         ? payload.requestKind
         : requestKindFromRequestType(payload?.requestType);
     const detail = typeof payload?.detail === "string" ? payload.detail : undefined;
