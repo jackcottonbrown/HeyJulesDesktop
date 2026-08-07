@@ -22,6 +22,8 @@ import {
   PreviewSnapshotToolkit,
   PreviewStandardToolkit,
 } from "./toolkits/preview/tools.ts";
+import { HeyJulesToolkitHandlersLive } from "./toolkits/hey-jules/handlers.ts";
+import { HeyJulesToolkit } from "./toolkits/hey-jules/tools.ts";
 
 const unauthorized = HttpServerResponse.jsonUnsafe(
   {
@@ -216,11 +218,18 @@ export const PreviewToolkitRegistrationLive = Layer.mergeAll(
   PreviewSnapshotRegistrationLive,
 );
 
+export const HeyJulesToolkitRegistrationLive = McpServer.toolkit(HeyJulesToolkit).pipe(
+  Layer.provide(HeyJulesToolkitHandlersLive),
+);
+
 const McpTransportLive = McpServer.layerHttp({
-  name: "T3 Code",
+  name: "HeyJules Desktop",
   version: packageJson.version,
   path: "/mcp",
   protocols: [McpProtocol.v2025_06_18],
 }).pipe(Layer.provide(McpAuthMiddlewareLive));
 
-export const layer = PreviewToolkitRegistrationLive.pipe(Layer.provideMerge(McpTransportLive));
+export const layer = Layer.mergeAll(
+  PreviewToolkitRegistrationLive,
+  HeyJulesToolkitRegistrationLive,
+).pipe(Layer.provideMerge(McpTransportLive));

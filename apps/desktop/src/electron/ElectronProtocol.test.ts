@@ -23,6 +23,13 @@ describe("ElectronProtocol", () => {
     unhandleMock.mockReset();
   });
 
+  it("uses HeyJules-specific renderer schemes", () => {
+    assert.equal(ElectronProtocol.getDesktopScheme(false), "heyjules");
+    assert.equal(ElectronProtocol.getDesktopScheme(true), "heyjules-dev");
+    assert.equal(ElectronProtocol.getDesktopUrl(false), "heyjules://app/");
+    assert.equal(ElectronProtocol.getDesktopUrl(true), "heyjules-dev://app/");
+  });
+
   it.effect("proxies the stable renderer origin to the current app server", () =>
     Effect.gen(function* () {
       let handler: ((request: Request) => Promise<Response>) | undefined;

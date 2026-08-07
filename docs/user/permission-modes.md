@@ -20,8 +20,11 @@ on the provider: Codex delegates routine approvals to an AI reviewer, Claude use
 permission mode, and providers without an equivalent (such as OpenCode) fall back to asking, like
 Supervised.
 
-**Full access**: allow commands and edits without prompts. The default. The agent runs
+**Full access**: allow commands and edits without prompts. The agent runs
 unattended until it finishes or asks a question of its own.
+
+New HeyJules Desktop threads default to **Supervised** so personal data changes, including calendar
+writes, pause for explicit approval.
 
 Approvals appear inline in the conversation. Approve or reject one and the agent continues from
 there.
