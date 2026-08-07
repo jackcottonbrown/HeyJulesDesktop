@@ -34,6 +34,11 @@ cp .env.example .env
 pnpm run dev:desktop
 ```
 
+The checked-in app assets come from [`assets/heyjules/app-icon.svg`](assets/heyjules/app-icon.svg).
+Maintainers can regenerate and verify every macOS, Windows, and web icon with
+`pnpm run icons:export` and `pnpm run icons:check`. Regeneration requires ImageMagick
+(`brew install imagemagick`); macOS supplies `iconutil`.
+
 Fresh threads default to **Supervised**. Keep that mode enabled for the prototype so calendar
 creation always appears as an inline approval before execution.
 

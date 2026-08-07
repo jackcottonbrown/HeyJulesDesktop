@@ -48,7 +48,8 @@ the task commands.
 
 - `scripts/`: workspace tooling run through `vp run`. Dev runner, desktop artifact builds, release
   helpers, mobile static checks and showcase capture, update-manifest merging.
-- `assets/`: brand and app icon sources per channel (`dev`, `nightly`, `prod`).
+- `assets/`: upstream brand sources plus the shared HeyJules vector and generated platform icons in
+  `assets/heyjules/`.
 - `patches/`: pnpm patches for pinned upstream dependencies.
 - `oxlint-plugin-t3code/`: repo-specific lint rules.
 - `experiments/`: throwaway prototypes. Not part of the shipped build.

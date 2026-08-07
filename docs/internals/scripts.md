@@ -74,7 +74,9 @@ authenticated.
 ### Desktop `.dmg` packaging notes
 
 - Default build is unsigned/not notarized for local sharing.
-- The DMG build uses `assets/prod/black-macos-1024.png` as the production app icon source.
+- The DMG build uses `assets/heyjules/heyjules-macos-1024.png` as the app icon source. Run
+  `vp run icons:export` after editing `assets/heyjules/app-icon.svg`, or `vp run icons:check` to
+  verify the checked-in platform variants. Exporting requires ImageMagick and macOS `iconutil`.
 - Desktop production windows load the bundled UI from the `t3code://app/` root URL (not a
   `127.0.0.1` document URL, and not an explicit `index.html` path).
 - Desktop packaging includes `apps/server/dist` (the `t3` backend) and starts it on loopback with an
